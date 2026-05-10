@@ -932,6 +932,25 @@ let runs=JSON.parse(localStorage.getItem("runs")) || [];
 const API_URL="https://chiqueirinho-backend.onrender.com";
 let usuarioLogado=null;
 
+function salvarTokenDaUrl(){
+  const params=new URLSearchParams(window.location.search);
+  const token=params.get("token");
+
+  if(token){
+    localStorage.setItem("chiqueirinho_token",token);
+    window.history.replaceState({},document.title,window.location.pathname);
+  }
+}
+
+function authHeaders(extra={}){
+  const token=localStorage.getItem("chiqueirinho_token");
+
+  return {
+    ...extra,
+    ...(token ? {Authorization:`Bearer ${token}`} : {})
+  };
+}
+
 const STAFF_KEY="staff123";
 let staffLiberado=sessionStorage.getItem("staffLiberado")==="true";
 
@@ -1336,7 +1355,7 @@ async function salvarRun(){
     const res=await fetch(API_URL+"/api/runs",{
       method:"POST",
       credentials:"include",
-      headers:{"Content-Type":"application/json"},
+      headers:authHeaders({"Content-Type":"application/json"}),
       body:JSON.stringify(run)
     });
 
@@ -1414,7 +1433,10 @@ async function loginDiscord(){
 
 async function carregarUsuario(){
   try{
-    const res=await fetch(API_URL+"/api/me",{credentials:"include"});
+    const res=await fetch(API_URL+"/api/me",{
+      credentials:"include",
+      headers:authHeaders()
+    });
     const data=await res.json();
 
     if(data.logged){
@@ -1734,6 +1756,7 @@ function atualizarTelas(){
   atualizarStaff();
 }
 
+salvarTokenDaUrl();
 aplicarTemaSalvo();
 atualizarTelas();
 gerarPlayersAtual();

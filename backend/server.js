@@ -1,9 +1,11 @@
+javascript
 require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
 const session = require("express-session");
+const crypto = require("crypto");
 
 const { avisarRepasse } = require("./bot");
 
@@ -13,7 +15,8 @@ app.use(express.json({ limit: "2mb" }));
 
 app.use(cors({
   origin: process.env.FRONTEND_URL,
-  credentials: true
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 app.set("trust proxy", 1);
@@ -32,13 +35,44 @@ app.use(session({
 const runs = [];
 const repasses = [];
 
+const tokenSessions = new Map();
+
+function criarToken(user) {
+  const token = crypto.randomBytes(32).toString("hex");
+
+  tokenSessions.set(token, {
+    user,
+    createdAt: Date.now()
+  });
+
+  return token;
+}
+
+function getUserFromRequest(req) {
+  const auth = req.headers.authorization || "";
+
+  if (auth.startsWith("Bearer ")) {
+    const token = auth.replace("Bearer ", "").trim();
+    const sessionData = tokenSessions.get(token);
+
+    if (sessionData?.user) {
+      return sessionData.user;
+    }
+  }
+
+  return req.session.user || null;
+}
+
 function requireLogin(req, res, next) {
-  if (!req.session.user) {
+  const user = getUserFromRequest(req);
+
+  if (!user) {
     return res.status(401).json({
       error: "Não logado"
     });
   }
 
+  req.user = user;
   next();
 }
 
@@ -58,7 +92,8 @@ function nomeUsuario(user) {
 app.get("/", (req, res) => {
   res.json({
     ok: true,
-    message: "Chiqueirinho backend online"
+    message: "Chiqueirinho backend online",
+    health: "/api/health"
   });
 });
 
@@ -117,7 +152,7 @@ app.get("/auth/discord/callback", async (req, res) => {
 
     const discordUser = userResponse.data;
 
-    req.session.user = {
+    const user = {
       id: discordUser.id,
       username: discordUser.username,
       globalName: discordUser.global_name,
@@ -125,7 +160,14 @@ app.get("/auth/discord/callback", async (req, res) => {
       staff: isStaff(discordUser.id)
     };
 
-    res.redirect(process.env.FRONTEND_URL);
+    req.session.user = user;
+
+    const appToken = criarToken(user);
+
+    const redirectUrl = new URL(process.env.FRONTEND_URL);
+    redirectUrl.searchParams.set("token", appToken);
+
+    res.redirect(redirectUrl.toString());
   } catch (err) {
     console.log("Erro OAuth:", err.response?.data || err.message);
     res.status(500).send("Erro no login Discord.");
@@ -133,7 +175,9 @@ app.get("/auth/discord/callback", async (req, res) => {
 });
 
 app.get("/api/me", (req, res) => {
-  if (!req.session.user) {
+  const user = getUserFromRequest(req);
+
+  if (!user) {
     return res.json({
       logged: false
     });
@@ -141,18 +185,18 @@ app.get("/api/me", (req, res) => {
 
   res.json({
     logged: true,
-    user: req.session.user
+    user
   });
 });
 
 app.post("/api/runs", requireLogin, async (req, res) => {
   const body = req.body;
 
-  const callerName = nomeUsuario(req.session.user);
+  const callerName = nomeUsuario(req.user);
 
   const run = {
     id: Date.now().toString(),
-    callerId: req.session.user.id,
+    callerId: req.user.id,
     callerName,
     createdAt: new Date().toISOString(),
 
@@ -181,7 +225,7 @@ app.post("/api/runs", requireLogin, async (req, res) => {
       devedorDiscordId: rep.donoDiscordId || null,
 
       credorNome: run.callerName,
-      credorDiscordId: req.session.user.id,
+      credorDiscordId: req.user.id,
 
       player: rep.player,
       pass: rep.pass,
