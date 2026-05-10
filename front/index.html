@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chiqueirinho Avaloniano - Raid Board</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+<style>
+*{ box-sizing:border-box; margin:0; padding:0; }
+
+:root{
+  --bg:#05070b;
+  --card:#0c1118;
+  --card2:#080d14;
+  --pink:#ff4da6;
+  --purple:#7a5cff;
+  --blue:#00e0ff;
+  --text:#e6edf3;
+  --green:#00ff88;
+  --gold:#ffc400;
+  --red:#ff5c7a;
+}
+
+body{font-family:"Inter",sans-serif;background:#05070b;color:var(--text);padding:18px;overflow-x:hidden;}
+canvas{position:fixed;inset:0;z-index:-1;opacity:.28;}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;animation:fadeDown .7s ease;}
+.brand{display:flex;align-items:center;gap:12px;}
+.logo{font-size:28px;animation:pulseGlow 2.5s infinite;filter:drop-shadow(0 0 10px var(--pink)) drop-shadow(0 0 20px var(--purple));}
+.title{font-weight:800;font-size:22px;background:linear-gradient(90deg,var(--pink),var(--purple),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:float 4s ease-in-out infinite;}
+.subtitle{font-size:11px;opacity:.65;}
+.tabs{display:flex;gap:8px;}
+.tabBtn{padding:10px 12px;border:none;border-radius:12px;background:#080d14;color:white;cursor:pointer;font-weight:800;transition:.2s;}
+.tabBtn.active,.tabBtn:hover{background:linear-gradient(90deg,var(--pink),var(--purple));box-shadow:0 0 15px rgba(255,77,166,.35);}
+.tab{display:none;animation:fadeUp .35s ease;}
+.tab.active{display:block;}
+.board{display:grid;grid-template-columns:300px 1fr 320px;gap:14px;align-items:start;}
+.card{background:var(--card);border-radius:16px;padding:14px;border:1px solid rgba(255,255,255,.05);box-shadow:0 0 0 1px rgba(255,255,255,.02),0 10px 30px rgba(0,0,0,.45);animation:fadeUp .55s ease;}
+.cardTitle{color:var(--pink);font-size:13px;font-weight:800;margin-bottom:10px;letter-spacing:.3px;}
+.input,select,textarea{width:100%;height:38px;padding:0 10px;margin-bottom:8px;border:none;border-radius:10px;background:var(--card2);color:white;transition:.2s;font-size:12px;}
+textarea{height:92px;padding:10px;display:none;resize:none;overflow:hidden;}
+.input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 2px var(--pink),0 0 12px rgba(255,77,166,.35);}
+.btn{width:100%;height:40px;border:none;border-radius:10px;background:linear-gradient(90deg,var(--pink),var(--purple));color:white;cursor:pointer;font-weight:800;transition:.2s;margin-top:6px;}
+.btn:hover{transform:translateY(-2px);box-shadow:0 0 18px var(--pink);}
+.btnDark{background:#080d14;border:1px solid rgba(255,255,255,.08);}
+.btnDanger{background:linear-gradient(90deg,var(--red),#b62254);}
+.switch{display:flex;align-items:center;justify-content:space-between;margin:8px 0;font-size:12px;font-weight:800;}
+.toggle{width:46px;height:24px;background:#222;border-radius:20px;position:relative;cursor:pointer;transition:.25s;}
+.toggle::before{content:"";position:absolute;width:18px;height:18px;border-radius:50%;background:white;top:3px;left:3px;transition:.25s;}
+.toggle.active{background:linear-gradient(90deg,var(--pink),var(--purple));box-shadow:0 0 12px rgba(255,77,166,.55);}
+.toggle.active::before{transform:translateX(20px);}
+.mobGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+.mob{background:var(--card2);border-radius:14px;padding:10px;min-height:118px;border:1px solid rgba(255,255,255,.03);}
+.mob h4{color:var(--pink);font-size:12px;margin-bottom:8px;}
+.checks{display:flex;flex-wrap:wrap;gap:5px;}
+.check{width:23px;height:23px;background:#03060a;border-radius:7px;cursor:pointer;transition:.18s;}
+.check.active{background:linear-gradient(90deg,var(--pink),var(--purple));box-shadow:0 0 10px rgba(255,77,166,.65);transform:scale(1.15);}
+.playersGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.playerRow{display:grid;grid-template-columns:1fr 96px 30px;gap:5px;align-items:center;}
+.playerRow .input,.playerRow select{height:30px;margin-bottom:0;font-size:11px;border-radius:8px;padding:0 8px;}
+.payCheck{width:30px;height:30px;background:#03060a;border-radius:8px;cursor:pointer;transition:.18s;}
+.payCheck.active{background:linear-gradient(90deg,var(--green),#00c96b);box-shadow:0 0 10px rgba(0,255,136,.55);}
+.resultBox{background:var(--card2);border-radius:14px;padding:12px;text-align:center;margin-bottom:10px;}
+.label{font-size:11px;opacity:.65;margin-bottom:4px;font-weight:800;}
+.big{font-size:27px;font-weight:800;}
+.green{color:var(--green);text-shadow:0 0 10px rgba(0,255,136,.45);}
+.gold{color:var(--gold);text-shadow:0 0 10px rgba(255,196,0,.4);}
+.mvp{text-align:center;color:var(--gold);font-size:13px;font-weight:800;min-height:20px;margin-bottom:10px;animation:mvpPulse 2s infinite;}
+.repasse{font-size:12px;line-height:1.5;text-align:center;}
+.repasseDetalhe{margin-top:8px;background:#080d14;border-radius:12px;padding:9px;text-align:left;font-size:11px;line-height:1.45;}
+.statsGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.stat{background:var(--card2);border-radius:14px;padding:14px;text-align:center;}
+.stat .num{font-size:26px;font-weight:800;color:var(--green);}
+.compactGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px;}
+.tile{background:var(--card2);border-radius:14px;padding:12px;min-height:92px;font-size:12px;line-height:1.45;}
+.tile b{color:var(--pink);}
+.historyItem{background:var(--card2);border-radius:14px;padding:12px;font-size:12px;line-height:1.45;min-height:110px;}
+.small{font-size:11px;opacity:.65;}
+.modalOverlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;z-index:50;padding:20px;backdrop-filter:blur(6px);}
+.modalOverlay.active{display:flex;animation:modalBg .2s ease;}
+.modal{width:min(460px,100%);background:#0c1118;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:18px;box-shadow:0 0 40px rgba(255,77,166,.16),0 20px 60px rgba(0,0,0,.65);animation:modalPop .22s ease;text-align:center;}
+.modalIcon{font-size:34px;margin-bottom:8px;}
+.modalTitle{font-size:18px;font-weight:800;margin-bottom:8px;background:linear-gradient(90deg,var(--pink),var(--purple),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.modalText{font-size:13px;opacity:.82;line-height:1.45;margin-bottom:14px;}
+.modalActions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.toast{position:fixed;right:18px;bottom:18px;background:#0c1118;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 16px;display:none;z-index:60;box-shadow:0 0 24px rgba(0,255,136,.16);font-size:13px;}
+.toast.active{display:block;animation:fadeUp .25s ease;}
+
+.staffLock{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+}
+
+.staffBadge{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(0,255,136,.10);
+  color:var(--green);
+  font-size:11px;
+  font-weight:800;
+  margin-bottom:8px;
+}
+
+.lockedBox{
+  opacity:.55;
+  filter:grayscale(.15);
+}
+
+
+
+body,
+.card,
+.tabBtn,
+.themeSwitch,
+.input,
+select,
+textarea,
+.tile,
+.historyItem,
+.stat,
+.resultBox,
+.mob,
+.payCheck,
+.check,
+.psPanel,
+.psCard,
+.modal,
+.toast{
+  transition:background .25s ease,color .25s ease,box-shadow .25s ease,border-color .25s ease;
+}
+
+body.light canvas{
+  opacity:.12;
+}
+
+body.light .title{
+  background:linear-gradient(90deg,#d9368f,#684cff,#008ec7);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+body.light .subtitle,
+body.light .small,
+body.light .label{
+  opacity:.72;
+}
+
+body.light .card,
+body.light .psPanel{
+  border:1px solid rgba(15,23,42,.08);
+}
+
+body.light .input,
+body.light select,
+body.light textarea,
+body.light .tile,
+body.light .historyItem,
+body.light .stat,
+body.light .resultBox,
+body.light .mob,
+body.light .psCard{
+  background:#f1f5f9;
+  border:1px solid rgba(15,23,42,.06);
+}
+
+body.light .check,
+body.light .payCheck{
+  background:#dbe4ef;
+}
+
+body.light .modalOverlay{
+  background:rgba(248,250,252,.72);
+}
+
+body.light .green{
+  color:#008f5d;
+  text-shadow:0 0 8px rgba(0,143,93,.18);
+}
+
+body.light .gold{
+  color:#b77900;
+  text-shadow:0 0 8px rgba(183,121,0,.18);
+}
+
+body.light .tabBtn{
+  background:#ffffff;
+  color:#111827;
+  border:1px solid rgba(15,23,42,.08);
+}
+
+body.light .tabBtn.active,
+body.light .tabBtn:hover{
+  color:white;
+  border-color:transparent;
+}
+
+body.light .btnDark{
+  background:#ffffff;
+  color:#111827;
+  border:1px solid rgba(15,23,42,.12);
+}
+
+.psLayout{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  align-items:start;
+}
+
+.psPanel{
+  background:var(--card);
+  border-radius:16px;
+  padding:14px;
+  border:1px solid rgba(255,255,255,.05);
+  box-shadow:0 0 0 1px rgba(255,255,255,.02),0 10px 30px rgba(0,0,0,.28);
+}
+
+.psHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:12px;
+}
+
+.psTitle{
+  font-size:14px;
+  font-weight:800;
+  color:var(--pink);
+}
+
+.psCounter{
+  font-size:11px;
+  font-weight:800;
+  padding:6px 9px;
+  border-radius:999px;
+  background:rgba(255,77,166,.12);
+  color:var(--pink);
+}
+
+.psCards{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+
+.psCard{
+  background:var(--card2);
+  border-radius:14px;
+  padding:12px;
+  min-height:88px;
+  border:1px solid rgba(255,255,255,.035);
+}
+
+.psCard b{
+  color:var(--pink);
+}
+
+.psCard .psLine{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  font-size:12px;
+  line-height:1.45;
+  margin-top:5px;
+}
+
+.psValue{
+  font-weight:800;
+  color:var(--green);
+}
+
+.psEmpty{
+  background:var(--card2);
+  border-radius:14px;
+  padding:14px;
+  font-size:12px;
+  opacity:.75;
+}
+
+.psWide{
+  grid-column:1/-1;
+}
+
+@media(max-width:900px){
+  
+body,
+.card,
+.tabBtn,
+.themeSwitch,
+.input,
+select,
+textarea,
+.tile,
+.historyItem,
+.stat,
+.resultBox,
+.mob,
+.payCheck,
+.check,
+.psPanel,
+.psCard,
+.modal,
+.toast{
+  transition:background .25s ease,color .25s ease,box-shadow .25s ease,border-color .25s ease;
+}
+
+body.light canvas{
+  opacity:.12;
+}
+
+body.light .title{
+  background:linear-gradient(90deg,#d9368f,#684cff,#008ec7);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+body.light .subtitle,
+body.light .small,
+body.light .label{
+  opacity:.72;
+}
+
+body.light .card,
+body.light .psPanel{
+  border:1px solid rgba(15,23,42,.08);
+}
+
+body.light .input,
+body.light select,
+body.light textarea,
+body.light .tile,
+body.light .historyItem,
+body.light .stat,
+body.light .resultBox,
+body.light .mob,
+body.light .psCard{
+  background:#f1f5f9;
+  border:1px solid rgba(15,23,42,.06);
+}
+
+body.light .check,
+body.light .payCheck{
+  background:#dbe4ef;
+}
+
+body.light .modalOverlay{
+  background:rgba(248,250,252,.72);
+}
+
+body.light .green{
+  color:#008f5d;
+  text-shadow:0 0 8px rgba(0,143,93,.18);
+}
+
+body.light .gold{
+  color:#b77900;
+  text-shadow:0 0 8px rgba(183,121,0,.18);
+}
+
+body.light .tabBtn{
+  background:#ffffff;
+  color:#111827;
+  border:1px solid rgba(15,23,42,.08);
+}
+
+body.light .tabBtn.active,
+body.light .tabBtn:hover{
+  color:white;
+  border-color:transparent;
+}
+
+body.light .btnDark{
+  background:#ffffff;
+  color:#111827;
+  border:1px solid rgba(15,23,42,.12);
+}
+
+.psLayout{grid-template-columns:1fr}
+  .psCards{grid-template-columns:1fr}
+}
+
+@keyframes modalBg{from{opacity:0}to{opacity:1}}
+@keyframes modalPop{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes pulseGlow{0%,100%{filter:drop-shadow(0 0 10px var(--pink)) drop-shadow(0 0 20px var(--purple))}50%{filter:drop-shadow(0 0 18px var(--pink)) drop-shadow(0 0 30px var(--purple))}}
+@keyframes mvpPulse{0%,100%{text-shadow:0 0 7px rgba(255,196,0,.5)}50%{text-shadow:0 0 18px rgba(255,196,0,1)}}
+
+.themeSwitch{
+  position:relative;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  width:190px;
+  height:42px;
+  padding:4px;
+  border-radius:999px;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(122,92,255,.26), transparent 35%),
+    linear-gradient(135deg,#060a10,#141c2b);
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 0 24px rgba(122,92,255,.18), inset 0 0 0 1px rgba(255,255,255,.03);
+}
+
+.themeSwitch::before{
+  content:"";
+  position:absolute;
+  top:4px;
+  left:4px;
+  width:calc(50% - 4px);
+  height:calc(100% - 8px);
+  border-radius:999px;
+  background:linear-gradient(135deg,var(--pink),var(--purple));
+  box-shadow:0 0 18px rgba(255,77,166,.48);
+  transition:.35s cubic-bezier(.2,.8,.2,1);
+  z-index:0;
+}
+
+.themeSwitch.premiumDay{
+  background:
+    radial-gradient(circle at 78% 22%, rgba(255,196,0,.36), transparent 36%),
+    linear-gradient(135deg,#ffffff,#dbeafe);
+  border:1px solid rgba(15,23,42,.10);
+  box-shadow:0 12px 28px rgba(15,23,42,.12), inset 0 0 0 1px rgba(255,255,255,.55);
+}
+
+.themeSwitch.premiumDay::before{
+  transform:translateX(100%);
+  background:linear-gradient(135deg,#ffcc3d,#ff8a3d);
+  box-shadow:0 0 18px rgba(255,196,0,.45);
+}
+
+.themeOption{
+  position:relative;
+  z-index:1;
+  border:none;
+  border-radius:999px;
+  background:transparent;
+  color:rgba(255,255,255,.58);
+  cursor:pointer;
+  font-size:12px;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  transition:.25s;
+}
+
+.themeOption.active{
+  color:white;
+}
+
+.themeOption span{
+  font-size:14px;
+  filter:drop-shadow(0 0 8px rgba(255,255,255,.24));
+}
+
+body.light .themeOption{
+  color:rgba(17,24,39,.58);
+}
+
+body.light .themeOption.active{
+  color:#111827;
+}
+
+body.light{
+  background:
+    radial-gradient(circle at 14% 4%, rgba(255,196,0,.20), transparent 28%),
+    radial-gradient(circle at 82% 10%, rgba(0,143,209,.16), transparent 30%),
+    radial-gradient(circle at 45% 95%, rgba(223,63,148,.10), transparent 34%),
+    var(--bg);
+}
+
+body:not(.light){
+  background:
+    radial-gradient(circle at 18% 3%, rgba(122,92,255,.09), transparent 30%),
+    radial-gradient(circle at 82% 12%, rgba(255,77,166,.09), transparent 28%),
+    var(--bg);
+}
+
+body.light .logo{
+  filter:drop-shadow(0 0 8px rgba(223,63,148,.32)) drop-shadow(0 0 15px rgba(101,87,246,.20));
+}
+
+body.light .card,
+body.light .psPanel{
+  background:rgba(255,255,255,.86);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(15,23,42,.08);
+  box-shadow:0 8px 30px rgba(15,23,42,.08), inset 0 0 0 1px rgba(255,255,255,.55);
+}
+
+body.light .resultBox,
+body.light .tile,
+body.light .historyItem,
+body.light .stat,
+body.light .mob,
+body.light .psCard{
+  background:rgba(241,245,249,.92);
+  border:1px solid rgba(15,23,42,.06);
+}
+
+body.light .input,
+body.light select,
+body.light textarea{
+  background:#f1f5f9;
+  color:#101827;
+  border:1px solid rgba(15,23,42,.08);
+}
+
+body.light .input::placeholder,
+body.light textarea::placeholder{
+  color:rgba(16,24,39,.45);
+}
+
+body.light .payCheck,
+body.light .check{
+  background:#dbe5f0;
+}
+
+body.light .check.active{
+  background:linear-gradient(90deg,#df3f94,#6557f6);
+  box-shadow:0 0 12px rgba(223,63,148,.35);
+}
+
+body.light .payCheck.active{
+  background:linear-gradient(90deg,#00a36a,#20c997);
+  box-shadow:0 0 12px rgba(0,163,106,.30);
+}
+
+body.light .tabBtn{
+  background:rgba(255,255,255,.72);
+  color:#101827;
+  border:1px solid rgba(15,23,42,.08);
+}
+
+body.light .tabBtn.active,
+body.light .tabBtn:hover{
+  color:white;
+  background:linear-gradient(90deg,#df3f94,#6557f6);
+  border-color:transparent;
+}
+
+
+/* CONTRASTE REFORÇADO NO MODO DIA */
+body.light{
+  color:#0f172a;
+}
+
+body.light .playerRow .input,
+body.light .playerRow select,
+body.light .nick,
+body.light .passSelect{
+  background:#ffffff;
+  color:#0f172a;
+  border:1px solid rgba(15,23,42,.18);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.65);
+}
+
+body.light .playerRow .input{
+  font-weight:700;
+}
+
+body.light .playerRow select{
+  font-weight:700;
+}
+
+body.light .playerRow .input::placeholder{
+  color:#64748b;
+}
+
+body.light select option{
+  color:#0f172a;
+  background:#ffffff;
+}
+
+body.light .small,
+body.light .subtitle,
+body.light .label{
+  color:#475569;
+  opacity:1;
+}
+
+body.light .cardTitle,
+body.light .psTitle,
+body.light .mob h4{
+  color:#c0267a;
+}
+
+body.light .repasse,
+body.light .repasseDetalhe,
+body.light #valores,
+body.light #repasseBox,
+body.light .historyItem,
+body.light .tile,
+body.light .psCard{
+  color:#0f172a;
+}
+
+body.light .repasseDetalhe b,
+body.light .historyItem b,
+body.light .tile b,
+body.light .psCard b{
+  color:#b91c73;
+}
+
+body.light .psLine span,
+body.light .historyItem,
+body.light .tile{
+  color:#1e293b;
+}
+
+body.light .psValue{
+  color:#007a52;
+}
+
+body.light .mvp{
+  color:#9a6700;
+  text-shadow:0 0 8px rgba(154,103,0,.18);
+}
+
+body.light .big.green{
+  color:#007a52;
+}
+
+body.light .big.gold{
+  color:#9a6700;
+}
+
+body.light .modalText{
+  color:#334155;
+  opacity:1;
+}
+
+body.light .toast{
+  color:#0f172a;
+}
+
+
+.userStatus{
+  min-height:42px;
+  padding:0 12px;
+  border-radius:14px;
+  background:#080d14;
+  border:1px solid rgba(255,255,255,.07);
+  color:rgba(255,255,255,.75);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  font-weight:800;
+  box-shadow:0 0 18px rgba(255,77,166,.08);
+}
+
+body.light .userStatus{
+  background:#ffffff;
+  color:#111827;
+  border:1px solid rgba(15,23,42,.10);
+  box-shadow:0 10px 24px rgba(15,23,42,.08);
+}
+
+@media(max-width:1200px){.board{grid-template-columns:1fr}.mobGrid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.header{align-items:flex-start;flex-direction:column}.tabs{flex-wrap:wrap}.mobGrid,.playersGrid,.statsGrid,.compactGrid{grid-template-columns:1fr}.modalActions{grid-template-columns:1fr}}
+</style>
+</head>
+
+<body>
+
+<canvas id="bg"></canvas>
+
+<div class="header">
+  <div class="brand">
+    <div class="logo">🐷</div>
+    <div>
+      <div class="title">Chiqueirinho Avaloniano</div>
+      <div class="subtitle">Raid Board sem rolagem • Hub público de DG Ava</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tabBtn active" onclick="abrirAba('dg',this)">🏰 DG</button>
+    <button class="tabBtn" onclick="abrirAba('pass',this)">🎟 PS</button>
+    <button class="tabBtn" onclick="abrirAba('dash',this)">📊 Dashboard</button>
+    <button class="tabBtn" onclick="abrirAba('staff',this)">🛡 Staff</button>
+    <button class="tabBtn" onclick="loginDiscord()">🔐 Discord</button>
+    <div id="userStatus" class="userStatus">Offline</div>
+    <div id="themeSwitchBox" class="themeSwitch premiumNight" title="Trocar tema">
+      <button id="darkThemeBtn" class="themeOption active" onclick="setTema('dark')">
+        <span>🌙</span><b>Noite</b>
+      </button>
+      <button id="lightThemeBtn" class="themeOption" onclick="setTema('light')">
+        <span>☀️</span><b>Dia</b>
+      </button>
+    </div>
+  </div>
+</div>
+
+<section id="dg" class="tab active">
+  <div class="board">
+    <div class="card">
+      <div class="cardTitle">CONFIG DA RUN</div>
+      <input id="caller" class="input" placeholder="Caller">
+      <input id="mapa" class="input" placeholder="Valor mapa">
+      <input id="bau" class="input" placeholder="Valor baú">
+      <input id="dgs" class="input" placeholder="Qtd DGs">
+
+      <div class="switch">
+        <span>Usar meter</span>
+        <div id="toggle" class="toggle" onclick="toggleMeter()"></div>
+      </div>
+
+      <textarea id="meter" placeholder="Cole o meter aqui..."></textarea>
+
+      <button class="btn" onclick="gerar()">Iniciar Run</button>
+      <button class="btn" onclick="perguntarSalvarRun()">Fechar / Salvar</button>
+
+      <div class="small" style="margin-top:8px;line-height:1.4;">
+        Fechar run abre confirmação. Se precisar alterar, volta sem salvar.
+      </div>
+    </div>
+
+    <div>
+      <div id="checklist" class="mobGrid"></div>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="cardTitle">PLAYERS DA RUN</div>
+        <div id="players" class="playersGrid"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cardTitle">RESULTADO</div>
+      <div id="mvp" class="mvp"></div>
+
+      <div class="resultBox">
+        <div class="label">PLAYER NORMAL</div>
+        <div id="normalValor" class="big green">0</div>
+      </div>
+
+      <div class="resultBox">
+        <div class="label">MVP 50%</div>
+        <div id="mvpValor" class="big gold">0</div>
+      </div>
+
+      <div class="resultBox">
+        <div class="label">FEE CALLER / DASHBOARD</div>
+        <div id="runValor" class="big green">0</div>
+      </div>
+
+      <div class="resultBox">
+        <div class="label">REGEAR → SERVIDOR</div>
+        <div id="regearValor" class="big gold">0</div>
+      </div>
+
+      <div id="valores" class="repasse"></div>
+      <div id="repasseBox" class="repasse"></div>
+    </div>
+  </div>
+</section>
+
+<section id="pass" class="tab">
+  <div class="psLayout">
+    <div class="psPanel">
+      <div class="psHeader">
+        <div>
+          <div class="psTitle">🎟 Resumo de PS</div>
+          <div class="small">Passes cadastrados para uso nas runs.</div>
+        </div>
+        <div id="psTotalBadge" class="psCounter">0 PS</div>
+      </div>
+
+      <div id="listaPasses" class="psCards"></div>
+    </div>
+
+    <div class="psPanel">
+      <div class="psHeader">
+        <div>
+          <div class="psTitle">💰 Resumo de FIR / Financeiro</div>
+          <div class="small">Repasses, regear e valores principais.</div>
+        </div>
+        <div class="psCounter">Financeiro</div>
+      </div>
+
+      <div id="passResumo" class="psCards"></div>
+    </div>
+
+    <div class="psPanel psWide">
+      <div class="psHeader">
+        <div>
+          <div class="psTitle">🛡 Área administrativa</div>
+          <div class="small">Callers veem apenas o necessário para a run.</div>
+        </div>
+        <div class="psCounter">Restrito</div>
+      </div>
+
+      <div class="psCard">
+        Cadastro e remoção de PS são funções administrativas e ficam disponíveis apenas para staff autorizado.
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="dash" class="tab">
+  <div class="statsGrid">
+    <div class="stat"><div class="small">Hoje</div><div id="dashHoje" class="num">0</div></div>
+    <div class="stat"><div class="small">Semana</div><div id="dashSemana" class="num">0</div></div>
+    <div class="stat"><div class="small">Mês</div><div id="dashMes" class="num">0</div></div>
+    <div class="stat"><div class="small">Runs</div><div id="dashRuns" class="num">0</div></div>
+  </div>
+
+  <div class="compactGrid">
+    <div class="card">
+      <div class="cardTitle">🏆 MVPs</div>
+      <div id="dashMvps"></div>
+    </div>
+    <div class="card">
+      <div class="cardTitle">🎟 Passes</div>
+      <div id="dashPasses"></div>
+    </div>
+    <div class="card">
+      <div class="cardTitle">ÚLTIMAS 3 RUNS</div>
+      <div id="dashUltimas"></div>
+    </div>
+  </div>
+</section>
+
+<section id="staff" class="tab">
+  <div id="staffLockedBox" class="card">
+    <div class="cardTitle">🛡 STAFF / ADMIN</div>
+    <div class="small" style="line-height:1.4;margin-bottom:10px;">
+      Área restrita. Apenas staff autorizado pode acessar painel, cadastro de PS, repasses e histórico.
+    </div>
+    <input id="staffCode" class="input" placeholder="Acesso staff">
+    <button class="btn" onclick="liberarStaff()">Liberar Staff</button>
+  </div>
+
+  <div id="staffPanel" style="display:none;">
+    <div class="compactGrid">
+      <div class="card">
+        <div class="cardTitle">CADASTRAR PS</div>
+        <span class="staffBadge">🛡 Staff liberado</span>
+        <input id="novoPass" class="input" placeholder="Nome do PS. Ex: Kzix Pass">
+        <input id="donoPass" class="input" placeholder="Responsável. Ex: Kzix">
+        <input id="donoDiscordId" class="input" placeholder="ID Discord do responsável para DM">
+        <button class="btn" onclick="adicionarPass()">Adicionar PS</button>
+        <button class="btn btnDark" onclick="bloquearStaff()">Bloquear Staff</button>
+      </div>
+
+      <div class="card">
+        <div class="cardTitle">GERENCIAR PS</div>
+        <div id="staffListaPasses" class="compactGrid"></div>
+      </div>
+
+      <div class="card">
+        <div class="cardTitle">CALLERS</div>
+        <div id="staffCallers"></div>
+      </div>
+
+      <div class="card">
+        <div class="cardTitle">REPASSES</div>
+        <div id="staffRepasses"></div>
+      </div>
+
+      <div class="card">
+        <div class="cardTitle">HISTÓRICO COMPACTO</div>
+        <div id="historyList"></div>
+        <button class="btn btnDanger" onclick="pedirLimparHistorico()">Limpar Histórico</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="modalOverlay" class="modalOverlay">
+  <div class="modal">
+    <div id="modalIcon" class="modalIcon">⚠️</div>
+    <div id="modalTitle" class="modalTitle">Confirmação</div>
+    <div id="modalText" class="modalText"></div>
+    <div id="modalActions" class="modalActions"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* FUNDO */
+const canvas=document.getElementById("bg");
+const ctx=canvas.getContext("2d");
+canvas.width=innerWidth;
+canvas.height=innerHeight;
+
+let particles=[];
+for(let i=0;i<70;i++){
+  particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,s:Math.random()*2,v:Math.random()*0.5+0.2});
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach(p=>{
+    ctx.fillStyle="rgba(255,77,166,.35)";
+    ctx.fillRect(p.x,p.y,p.s,p.s);
+    p.y+=p.v;
+    if(p.y>canvas.height){p.y=0;p.x=Math.random()*canvas.width;}
+  });
+  requestAnimationFrame(draw);
+}
+draw();
+
+/* DADOS */
+let dados={mapa:0,bau:0,dgs:0,baus:0,total:0,totalRun:0,regearServer:0,totalBruto:0};
+let usarMeter=false;
+let topPlayer=null;
+let meterPlayers=[];
+
+const PARTY_SIZE=20;
+const mobs=["Caldinho","Dançarina","Suicida","Calango","Constructor","Boss Final"];
+
+let passes=JSON.parse(localStorage.getItem("passes")) || [
+  {nome:"Chiqueirinho Pass",dono:"Sebastião"},
+  {nome:"Kzix Pass",dono:"Kzix"},
+  {nome:"Suicide Pass",dono:"Suicide"},
+  {nome:"Alemon Pass",dono:"Alemon"}
+];
+
+let runs=JSON.parse(localStorage.getItem("runs")) || [];
+
+const API_URL="http://localhost:3000";
+let usuarioLogado=null;
+
+const STAFF_KEY="staff123";
+let staffLiberado=sessionStorage.getItem("staffLiberado")==="true";
+
+/* HELPERS */
+function br(v){return (Number(v)||0).toLocaleString("pt-BR");}
+function salvarPasses(){localStorage.setItem("passes",JSON.stringify(passes));}
+function salvarRuns(){localStorage.setItem("runs",JSON.stringify(runs));}
+
+function aplicarTemaSalvo(){
+  let tema=localStorage.getItem("temaChiqueirinho") || "dark";
+  setTema(tema,false);
+}
+
+function setTema(tema,salvar=true){
+  let claro=tema==="light";
+
+  document.body.classList.toggle("light",claro);
+
+  if(typeof darkThemeBtn!=="undefined" && typeof lightThemeBtn!=="undefined"){
+    darkThemeBtn.classList.toggle("active",!claro);
+    lightThemeBtn.classList.toggle("active",claro);
+  }
+
+  if(typeof themeSwitchBox!=="undefined"){
+    themeSwitchBox.classList.toggle("premiumDay",claro);
+    themeSwitchBox.classList.toggle("premiumNight",!claro);
+  }
+
+  if(salvar){
+    localStorage.setItem("temaChiqueirinho",tema);
+  }
+}
+
+function abrirAba(id,btn){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".tabBtn").forEach(b=>b.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  btn.classList.add("active");
+  atualizarTelas();
+}
+
+/* MODAIS */
+function abrirModal({icon="⚠️",title="Confirmação",text="",actions=[]}){
+  modalIcon.innerText=icon;
+  modalTitle.innerText=title;
+  modalText.innerHTML=text;
+  modalActions.innerHTML="";
+
+  actions.forEach(action=>{
+    let b=document.createElement("button");
+    b.className="btn "+(action.className||"");
+    b.innerText=action.label;
+    b.onclick=()=>{
+      if(action.close!==false) fecharModal();
+      action.onClick && action.onClick();
+    };
+    modalActions.appendChild(b);
+  });
+
+  modalOverlay.classList.add("active");
+}
+
+function fecharModal(){modalOverlay.classList.remove("active");}
+
+function mostrarToast(msg){
+  toast.innerText=msg;
+  toast.classList.add("active");
+  setTimeout(()=>toast.classList.remove("active"),2200);
+}
+
+/* METER */
+function toggleMeter(){
+  usarMeter=!usarMeter;
+  toggle.classList.toggle("active");
+  meter.style.display=usarMeter?"block":"none";
+  analisarMVP();
+  gerarPlayersAtual();
+}
+
+meter.addEventListener("input",()=>{
+  analisarMVP();
+  gerarPlayersAtual();
+});
+
+function parseMeter(){
+  let lista=[];
+  meter.value.split("\n").forEach(l=>{
+    if(!l.trim() || !l.includes(":")) return;
+    let nome=l.split(":")[0].trim();
+    let pctMatch=l.match(/\(([\d,]+)%\)/);
+    let pct=pctMatch?parseFloat(pctMatch[1].replace(",",".")):0;
+    if(nome) lista.push({nome,pct});
+  });
+
+  lista.sort((a,b)=>b.pct-a.pct);
+  return lista;
+}
+
+function analisarMVP(){
+  if(!usarMeter){
+    topPlayer=null;
+    meterPlayers=[];
+    mvp.innerText="";
+    return;
+  }
+
+  meterPlayers=parseMeter();
+  topPlayer=meterPlayers[0] || null;
+  mvp.innerText=topPlayer ? "🏆 MVP: "+topPlayer.nome : "";
+}
+
+/* RUN */
+function gerar(){
+  dados.mapa=Number(mapa.value)||0;
+  dados.bau=Number(bau.value)||0;
+  dados.dgs=Number(dgs.value)||0;
+  dados.baus=0;
+  dados.total=0;
+  dados.totalRun=0;
+
+  gerarChecklist();
+  gerarPlayersAtual();
+  analisarMVP();
+  atualizar();
+}
+
+function gerarChecklist(){
+  checklist.innerHTML="";
+
+  mobs.forEach(nome=>{
+    let div=document.createElement("div");
+    div.className="mob";
+
+    let quantidade=nome==="Boss Final" ? dados.dgs : dados.dgs+3;
+    let html=`<h4>${nome}</h4><div class="checks">`;
+
+    for(let i=0;i<quantidade;i++){html+=`<div class="check" onclick="toggleCheck(this)"></div>`;}
+
+    html+="</div>";
+    div.innerHTML=html;
+    checklist.appendChild(div);
+  });
+}
+
+function toggleCheck(el){
+  el.classList.toggle("active");
+  contar();
+}
+
+function contar(){
+  dados.baus=document.querySelectorAll(".check.active").length;
+  atualizar();
+}
+
+/* PLAYERS */
+function gerarPlayersAtual(){
+  let nomes=[];
+
+  if(usarMeter && meterPlayers.length){nomes=meterPlayers.map(p=>p.nome).slice(0,20);}
+  else{for(let i=1;i<=20;i++) nomes.push("Player "+i);}
+
+  gerarPlayers(nomes);
+}
+
+function pegarEstadoPlayers(){
+  let estado={};
+
+  document.querySelectorAll(".playerRow").forEach(row=>{
+    let nick=row.querySelector(".nick")?.value || "";
+    let pass=row.querySelector(".passSelect")?.value || "Sem Pass";
+    let pagou=row.querySelector(".payCheck")?.classList.contains("active") || false;
+    if(nick){estado[nick]={nick,pass,pagou};}
+  });
+
+  return estado;
+}
+
+function gerarPlayers(nomes){
+  let estado=pegarEstadoPlayers();
+  players.innerHTML="";
+
+  nomes.forEach((nome,i)=>{
+    let old=estado[nome] || {};
+    let row=document.createElement("div");
+    row.className="playerRow";
+
+    row.innerHTML=`
+      <input class="input nick" value="${old.nick || nome}" placeholder="P${i+1}" oninput="atualizar()">
+      <select class="passSelect" onchange="atualizar()">
+        <option value="Sem Pass">Sem Pass</option>
+        ${passes.map(p=>`<option value="${p.nome}" ${old.pass===p.nome?'selected':''}>${p.nome}</option>`).join("")}
+      </select>
+      <div class="payCheck ${old.pagou?'active':''}" onclick="this.classList.toggle('active'); atualizar();" title="Pagou"></div>
+    `;
+
+    players.appendChild(row);
+  });
+}
+
+function dadosPlayers(){
+  let arr=[];
+
+  document.querySelectorAll(".playerRow").forEach(row=>{
+    let nick=row.querySelector(".nick").value.trim();
+    let pass=row.querySelector(".passSelect").value;
+    let pagou=row.querySelector(".payCheck").classList.contains("active");
+    if(nick) arr.push({nick,pass,pagou});
+  });
+
+  return arr;
+}
+
+/* CALCULO */
+function calcularRegearIndividual(){
+  return 100000*dados.dgs;
+}
+
+function calcularRegearServidor(){
+  return calcularRegearIndividual()*PARTY_SIZE;
+}
+
+function calcularTotalIndividual(){
+  return (dados.mapa*dados.dgs)+(dados.baus*dados.bau)+calcularRegearIndividual();
+}
+
+function calcularTotalBrutoRun(totalIndividual){
+  let descontoMvp=topPlayer ? Math.floor(totalIndividual/2) : 0;
+  return (totalIndividual*PARTY_SIZE)-descontoMvp;
+}
+
+function calcularFeeCaller(totalIndividual){
+  let totalBruto=calcularTotalBrutoRun(totalIndividual);
+  let regearServidor=calcularRegearServidor();
+  return Math.max(totalBruto-regearServidor,0);
+}
+
+function atualizar(){
+  let totalIndividual=calcularTotalIndividual();
+  let totalBruto=calcularTotalBrutoRun(totalIndividual);
+  let regearServidor=calcularRegearServidor();
+  let feeCaller=calcularFeeCaller(totalIndividual);
+
+  dados.total=totalIndividual;
+  dados.totalBruto=totalBruto;
+  dados.regearServer=regearServidor;
+  dados.totalRun=feeCaller;
+
+  let mvpCalc=topPlayer ? Math.floor(totalIndividual/2) : totalIndividual;
+
+  animarNumero(normalValor,totalIndividual);
+  animarNumero(mvpValor,mvpCalc);
+  animarNumero(runValor,feeCaller);
+  animarNumero(regearValor,regearServidor);
+
+  valores.innerHTML=`
+    Baús marcados: ${dados.baus}<br>
+    Regear individual: ${br(calcularRegearIndividual())}<br>
+    Total bruto cobrado: ${br(totalBruto)}<br>
+    Regear do servidor: ${br(regearServidor)}
+  `;
+
+  calcularRepasse();
+}
+
+function animarNumero(el,valorFinal){
+  let start=null;
+  let duracao=260;
+  let atualAnterior=Number(el.innerText.replace(/\D/g,""))||0;
+
+  function ease(x){return 1-Math.pow(1-x,3);}
+
+  function frame(t){
+    if(!start) start=t;
+    let progress=Math.min((t-start)/duracao,1);
+    let valor=Math.floor(atualAnterior+(valorFinal-atualAnterior)*ease(progress));
+    el.innerText=br(valor);
+    if(progress<1) requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame(frame);
+}
+
+function calcularRepasse(){
+  let resumo={};
+  let detalhes=[];
+
+  dadosPlayers().forEach(player=>{
+    if(player.pass==="Sem Pass") return;
+
+    let passInfo=passes.find(x=>x.nome===player.pass);
+    let dono=passInfo ? passInfo.dono : player.pass;
+
+    if(!resumo[dono]) resumo[dono]=0;
+    resumo[dono]+=dados.total;
+
+    detalhes.push({
+      player: player.nick,
+      pass: player.pass,
+      dono: dono,
+      donoDiscordId: passInfo ? (passInfo.discordId || null) : null,
+      caller: caller.value || "Sem caller",
+      valor: dados.total
+    });
+  });
+
+  let keys=Object.keys(resumo);
+
+  if(!keys.length){
+    repasseBox.innerHTML="";
+    return;
+  }
+
+  let html="<br><b>📤 REPASSES</b><br><br>";
+
+  keys.forEach(dono=>{
+    html+=`💰 ${dono}: ${br(resumo[dono])}<br>`;
+  });
+
+  html+="<br><b>📋 DETALHES</b><br>";
+
+  detalhes.forEach(d=>{
+    html+=`
+      <div class="repasseDetalhe">
+        🎟 <b>${d.player}</b> usou o <b>${d.pass}</b><br>
+        👤 Responsável do pass: <b>${d.dono}</b><br>
+        💵 Valor desse player: <b>${br(d.valor)}</b><br>
+        🏰 DG puxada por: <b>${d.caller}</b>
+      </div>
+    `;
+  });
+
+  repasseBox.innerHTML=html;
+}
+
+function gerarRepasseDetalhes(){
+  let detalhes=[];
+
+  dadosPlayers().forEach(player=>{
+    if(player.pass==="Sem Pass") return;
+
+    let passInfo=passes.find(x=>x.nome===player.pass);
+    let dono=passInfo ? passInfo.dono : player.pass;
+
+    detalhes.push({
+      player: player.nick,
+      pass: player.pass,
+      dono: dono,
+      donoDiscordId: passInfo ? (passInfo.discordId || null) : null,
+      caller: caller.value || "Sem caller",
+      valor: dados.total
+    });
+  });
+
+  return detalhes;
+}
+
+/* SALVAR */
+function perguntarSalvarRun(){
+  if(!dados.total){
+    abrirModal({
+      icon:"⚠️",
+      title:"Run não iniciada",
+      text:"Inicie a run e marque os baús antes de salvar.",
+      actions:[{label:"Entendi",className:"btnDark"}]
+    });
+    return;
+  }
+
+  abrirModal({
+    icon:"🐷",
+    title:"Fechar e salvar run?",
+    text:"Você deseja fazer alguma alteração antes de mandar essa run para o histórico e dashboard?",
+    actions:[
+      {label:"Sim, vou alterar",className:"btnDark",onClick:()=>mostrarToast("Beleza, nada foi salvo. Pode ajustar a run.")},
+      {label:"Não, salvar agora",onClick:()=>salvarRun()}
+    ]
+  });
+}
+
+async function salvarRun(){
+  let jogadores=dadosPlayers();
+  let passUsados=jogadores.filter(p=>p.pass!=="Sem Pass");
+  let repasseDetalhes=gerarRepasseDetalhes();
+
+  let run={
+    id:Date.now(),
+    caller:caller.value || "Sem caller",
+    data:new Date().toISOString(),
+    dgs:dados.dgs,
+    baus:dados.baus,
+    total:dados.total,
+    totalBruto:dados.totalBruto,
+    totalRun:dados.totalRun,
+    regearServer:dados.regearServer,
+    mvp:topPlayer ? topPlayer.nome : null,
+    players:jogadores,
+    passes:passUsados.map(p=>p.pass),
+    repasses:repasseDetalhes
+  };
+
+  try{
+    const res=await fetch(API_URL+"/api/runs",{
+      method:"POST",
+      credentials:"include",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(run)
+    });
+
+    if(!res.ok){
+      abrirModal({
+        icon:"🔐",
+        title:"Login necessário",
+        text:"Entre com Discord antes de salvar no backend e disparar as mensagens do bot.",
+        actions:[
+          {label:"Entrar Discord",onClick:()=>loginDiscord()},
+          {label:"Cancelar",className:"btnDark"}
+        ]
+      });
+      return;
+    }
+
+    const data=await res.json();
+
+    runs.unshift(run);
+    runs=runs.slice(0,30);
+    salvarRuns();
+    limparTelaRun();
+    atualizarTelas();
+
+    abrirModal({
+      icon:"✅",
+      title:"Run salva com sucesso",
+      text:"Run enviada para o backend. O bot tentou enviar DM e mensagem no canal de repasses.",
+      actions:[{label:"Fechou",className:"btnDark"}]
+    });
+
+  }catch(err){
+    abrirModal({
+      icon:"❌",
+      title:"Backend não conectado",
+      text:"Confere se o terminal está rodando node server.js.",
+      actions:[{label:"Entendi",className:"btnDark"}]
+    });
+  }
+}
+
+function limparTelaRun(){
+  caller.value="";
+  mapa.value="";
+  bau.value="";
+  dgs.value="";
+  meter.value="";
+  checklist.innerHTML="";
+  players.innerHTML="";
+  mvp.innerText="";
+  valores.innerHTML="";
+  repasseBox.innerHTML="";
+  normalValor.innerText="0";
+  mvpValor.innerText="0";
+  runValor.innerText="0";
+  regearValor.innerText="0";
+
+  dados={mapa:0,bau:0,dgs:0,baus:0,total:0,totalRun:0,regearServer:0,totalBruto:0};
+  topPlayer=null;
+  meterPlayers=[];
+
+  if(usarMeter){
+    usarMeter=false;
+    toggle.classList.remove("active");
+    meter.style.display="none";
+  }
+
+  gerarPlayersAtual();
+}
+
+/* API / DISCORD */
+async function loginDiscord(){
+  window.location.href=API_URL+"/auth/discord";
+}
+
+async function carregarUsuario(){
+  try{
+    const res=await fetch(API_URL+"/api/me",{credentials:"include"});
+    const data=await res.json();
+
+    if(data.logged){
+      usuarioLogado=data.user;
+      userStatus.innerText=`✅ ${data.user.globalName || data.user.username}`;
+      if(data.user.staff){
+        staffLiberado=true;
+        sessionStorage.setItem("staffLiberado","true");
+      }
+      if(caller && !caller.value){
+        caller.value=data.user.globalName || data.user.username;
+      }
+    }else{
+      usuarioLogado=null;
+      userStatus.innerText="Offline";
+    }
+
+    atualizarTelas();
+  }catch(e){
+    userStatus.innerText="Backend off";
+  }
+}
+
+/* STAFF LOCAL */
+function atualizarStaffGate(){
+  if(typeof staffLockedBox==="undefined" || typeof staffPanel==="undefined") return;
+
+  staffLockedBox.style.display=staffLiberado ? "none" : "block";
+  staffPanel.style.display=staffLiberado ? "block" : "none";
+}
+
+function liberarStaff(){
+  let senha=(staffCode.value || "").trim();
+
+  if(senha!==STAFF_KEY){
+    abrirModal({
+      icon:"🛡",
+      title:"Acesso negado",
+      text:"Somente staff pode cadastrar PS. Senha incorreta.",
+      actions:[{label:"Entendi",className:"btnDark"}]
+    });
+    return;
+  }
+
+  staffLiberado=true;
+  sessionStorage.setItem("staffLiberado","true");
+  staffCode.value="";
+  atualizarStaffGate();
+  mostrarToast("Staff liberado para cadastrar PS.");
+}
+
+function bloquearStaff(){
+  staffLiberado=false;
+  sessionStorage.removeItem("staffLiberado");
+  atualizarStaffGate();
+  mostrarToast("Área staff bloqueada.");
+}
+
+/* PASS */
+function adicionarPass(){
+  if(!staffLiberado){
+    abrirModal({
+      icon:"🛡",
+      title:"Área restrita",
+      text:"Apenas staff pode cadastrar PS.",
+      actions:[{label:"Entendi",className:"btnDark"}]
+    });
+    return;
+  }
+
+  let nome=novoPass.value.trim();
+  let dono=donoPass.value.trim();
+  let discordId=donoDiscordId.value.trim();
+
+  if(!nome || !dono){
+    abrirModal({
+      icon:"⚠️",
+      title:"Pass incompleto",
+      text:"Preencha o nome do pass e o responsável.",
+      actions:[{label:"Entendi",className:"btnDark"}]
+    });
+    return;
+  }
+
+  passes.push({nome,dono,discordId});
+  salvarPasses();
+  novoPass.value="";
+  donoPass.value="";
+  donoDiscordId.value="";
+  gerarPlayersAtual();
+  atualizarTelas();
+  mostrarToast("PS cadastrado.");
+}
+
+function removerPass(i){
+  if(!staffLiberado){
+    abrirModal({
+      icon:"🛡",
+      title:"Área restrita",
+      text:"Apenas staff pode remover PS.",
+      actions:[{label:"Entendi",className:"btnDark"}]
+    });
+    return;
+  }
+
+  abrirModal({
+    icon:"🗑️",
+    title:"Remover PS?",
+    text:`Tem certeza que deseja remover <b>${passes[i].nome}</b>?`,
+    actions:[
+      {label:"Cancelar",className:"btnDark"},
+      {label:"Remover",className:"btnDanger",onClick:()=>{
+        passes.splice(i,1);
+        salvarPasses();
+        gerarPlayersAtual();
+        atualizarTelas();
+        mostrarToast("PS removido.");
+      }}
+    ]
+  });
+}
+
+function atualizarListaPasses(){
+  if(typeof psTotalBadge!=="undefined"){
+    psTotalBadge.innerText=`${passes.length} PS`;
+  }
+
+  listaPasses.innerHTML=passes.map((p)=>`
+    <div class="psCard">
+      <b>${p.nome}</b>
+      <div class="psLine">
+        <span>Responsável</span>
+        <span>${p.dono}</span>
+      </div>
+      <div class="psLine">
+        <span>DM</span>
+        <span>${p.discordId ? "Configurada" : "Sem ID"}</span>
+      </div>
+    </div>
+  `).join("") || "<div class='psEmpty'>Nenhum PS cadastrado.</div>";
+
+  if(typeof staffListaPasses!=="undefined"){
+    staffListaPasses.innerHTML=passes.map((p,i)=>`
+      <div class="tile">
+        <b>${p.nome}</b><br>
+        Resp: ${p.dono}<br>
+        DM: ${p.discordId ? "Configurada" : "Sem ID"}<br>
+        <button class="btn btnDanger" onclick="removerPass(${i})">Remover</button>
+      </div>
+    `).join("") || "<div class='small'>Nenhum PS cadastrado.</div>";
+  }
+}
+
+/* DASHBOARD */
+function soma(arr){return arr.reduce((a,b)=>a+(b.totalRun||b.total||0),0);}
+
+function atualizarDashboard(){
+  let agora=new Date();
+  let hoje=runs.filter(r=>new Date(r.data).toDateString()===agora.toDateString());
+  let semana=runs.filter(r=>(agora-new Date(r.data))<=7*24*60*60*1000);
+  let mes=runs.filter(r=>new Date(r.data).getMonth()===agora.getMonth() && new Date(r.data).getFullYear()===agora.getFullYear());
+
+  dashHoje.innerText=br(soma(hoje));
+  dashSemana.innerText=br(soma(semana));
+  dashMes.innerText=br(soma(mes));
+  dashRuns.innerText=runs.length;
+
+  let mvps={};
+  runs.forEach(r=>{if(r.mvp) mvps[r.mvp]=(mvps[r.mvp]||0)+1;});
+
+  dashMvps.innerHTML=Object.keys(mvps).slice(0,5).map(k=>`
+    <div class="historyItem">🏆 ${k}: ${mvps[k]}x</div>
+  `).join("") || "<div class='small'>Sem MVPs.</div>";
+
+  let passCount={};
+  runs.forEach(r=>{r.passes.forEach(p=>passCount[p]=(passCount[p]||0)+1);});
+
+  dashPasses.innerHTML=Object.keys(passCount).slice(0,5).map(k=>`
+    <div class="historyItem">🎟 ${k}: ${passCount[k]} usos</div>
+  `).join("") || "<div class='small'>Sem passes.</div>";
+
+  dashUltimas.innerHTML=runs.slice(0,3).map(r=>`
+    <div class="historyItem">
+      <b>${r.caller}</b><br>
+      Fee caller: ${br(r.totalRun||r.total)} • ${r.dgs} DGs<br>
+      MVP: ${r.mvp || "Sem meter"}
+    </div>
+  `).join("") || "<div class='small'>Sem runs.</div>";
+}
+
+function atualizarHistoricoCompacto(){
+  historyList.innerHTML=runs.slice(0,3).map(r=>`
+    <div class="historyItem">
+      <b>${r.caller}</b><br>
+      ${new Date(r.data).toLocaleTimeString()}<br>
+      Fee caller: ${br(r.totalRun||r.total)}<br>
+      Regear servidor: ${br(r.regearServer||0)}<br>
+      Individual: ${br(r.total)}<br>
+      Players: ${r.players?.length || 0}<br>
+      ${r.repasses?.length ? "Repasses: "+r.repasses.length : "Sem repasse"}
+    </div>
+  `).join("") || "<div class='small'>Sem histórico.</div>";
+}
+
+function atualizarStaff(){
+  let callers={};
+
+  runs.forEach(r=>{
+    if(!callers[r.caller]) callers[r.caller]={runs:0,dgs:0,total:0,regear:0};
+    callers[r.caller].runs++;
+    callers[r.caller].dgs+=r.dgs;
+    callers[r.caller].total+=(r.totalRun||r.total);
+    callers[r.caller].regear+=(r.regearServer||0);
+  });
+
+  staffCallers.innerHTML=Object.keys(callers).slice(0,8).map(c=>`
+    <div class="historyItem">
+      <b>${c}</b><br>
+      Runs: ${callers[c].runs}<br>
+      DGs: ${callers[c].dgs}<br>
+      Fee caller: ${br(callers[c].total)}<br>
+      Regear servidor: ${br(callers[c].regear)}
+    </div>
+  `).join("") || "<div class='small'>Sem dados.</div>";
+
+  let reps={};
+  let detalhesPorDono={};
+
+  runs.forEach(r=>{
+    if(r.repasses && r.repasses.length){
+      r.repasses.forEach(rep=>{
+        let dono=rep.dono;
+        reps[dono]=(reps[dono]||0)+rep.valor;
+
+        if(!detalhesPorDono[dono]) detalhesPorDono[dono]=[];
+        detalhesPorDono[dono].push(rep);
+      });
+    }else{
+      r.passes.forEach(pass=>{
+        let p=passes.find(x=>x.nome===pass);
+        let dono=p ? p.dono : pass;
+        reps[dono]=(reps[dono]||0)+r.total;
+      });
+    }
+  });
+
+  staffRepasses.innerHTML=Object.keys(reps).slice(0,8).map(k=>{
+    let detalhes=(detalhesPorDono[k]||[]).slice(0,5).map(d=>`
+      <br>🎟 <b>${d.player}</b>: ${br(d.valor)} do <b>${d.pass}</b> na DG do <b>${d.caller}</b>
+    `).join("");
+
+    return `
+      <div class="historyItem">
+        <b>${k}: ${br(reps[k])}</b>
+        ${detalhes || "<br><span class='small'>Sem detalhes antigos.</span>"}
+      </div>
+    `;
+  }).join("") || "<div class='small'>Sem repasses.</div>";
+
+  let totalRegear=runs.reduce((acc,r)=>acc+(r.regearServer||0),0);
+  let totalFeeCaller=runs.reduce((acc,r)=>acc+(r.totalRun||r.total||0),0);
+
+  let financeiro=`
+    <div class="psCard">
+      <b>Regear → Servidor</b>
+      <div class="psLine"><span>Total</span><span class="psValue">${br(totalRegear)}</span></div>
+      <div class="small">Valor que callers devem repassar ao servidor.</div>
+    </div>
+    <div class="psCard">
+      <b>Fee Callers</b>
+      <div class="psLine"><span>Total</span><span class="psValue">${br(totalFeeCaller)}</span></div>
+      <div class="small">Sem contar regear do servidor.</div>
+    </div>
+  `;
+
+  let repasseHtml=Object.keys(reps).slice(0,4).map(k=>{
+    let detalhe=(detalhesPorDono[k]||[]).slice(0,3).map(d=>
+      `<div class="psLine"><span>🎟 ${d.player}</span><span>${br(d.valor)}</span></div>`
+    ).join("");
+
+    return `
+      <div class="psCard">
+        <b>${k}</b>
+        <div class="psLine"><span>Total PS</span><span class="psValue">${br(reps[k])}</span></div>
+        ${detalhe || "<div class='small'>Sem detalhes ainda.</div>"}
+      </div>
+    `;
+  }).join("");
+
+  passResumo.innerHTML=financeiro+(repasseHtml || "");
+}
+
+function pedirLimparHistorico(){
+  abrirModal({
+    icon:"🧹",
+    title:"Limpar histórico?",
+    text:"Isso apaga histórico, dashboard e staff localmente. Essa ação não volta.",
+    actions:[
+      {label:"Cancelar",className:"btnDark"},
+      {label:"Apagar tudo",className:"btnDanger",onClick:()=>limparHistorico()}
+    ]
+  });
+}
+
+function limparHistorico(){
+  runs=[];
+  salvarRuns();
+  atualizarTelas();
+  mostrarToast("Histórico e dashboard limpos.");
+}
+
+function atualizarTelas(){
+  atualizarStaffGate();
+  atualizarListaPasses();
+  atualizarDashboard();
+  atualizarHistoricoCompacto();
+  atualizarStaff();
+}
+
+aplicarTemaSalvo();
+atualizarTelas();
+gerarPlayersAtual();
+carregarUsuario();
+</script>
+
+</body>
+</html>
