@@ -1,4 +1,3 @@
-javascript
 require("dotenv").config();
 
 const express = require("express");
@@ -7,7 +6,7 @@ const axios = require("axios");
 const session = require("express-session");
 const crypto = require("crypto");
 
-const { avisarRepasse } = require("./bot");
+const { avisarRepasse, getAcessoDiscord } = require("./bot");
 
 const app = express();
 
@@ -35,16 +34,18 @@ app.use(session({
 const runs = [];
 const repasses = [];
 
+let passes = [
+  { id: "default_chiqueirinho", nome: "Chiqueirinho Pass", dono: "Sebastião", discordId: null, createdAt: new Date().toISOString() },
+  { id: "default_kzix", nome: "Kzix Pass", dono: "Kzix", discordId: null, createdAt: new Date().toISOString() },
+  { id: "default_suicide", nome: "Suicide Pass", dono: "Suicide", discordId: null, createdAt: new Date().toISOString() },
+  { id: "default_alemon", nome: "Alemon Pass", dono: "Alemon", discordId: null, createdAt: new Date().toISOString() }
+];
+
 const tokenSessions = new Map();
 
 function criarToken(user) {
   const token = crypto.randomBytes(32).toString("hex");
-
-  tokenSessions.set(token, {
-    user,
-    createdAt: Date.now()
-  });
-
+  tokenSessions.set(token, { user, createdAt: Date.now() });
   return token;
 }
 
@@ -55,9 +56,7 @@ function getUserFromRequest(req) {
     const token = auth.replace("Bearer ", "").trim();
     const sessionData = tokenSessions.get(token);
 
-    if (sessionData?.user) {
-      return sessionData.user;
-    }
+    if (sessionData?.user) return sessionData.user;
   }
 
   return req.session.user || null;
@@ -67,16 +66,30 @@ function requireLogin(req, res, next) {
   const user = getUserFromRequest(req);
 
   if (!user) {
-    return res.status(401).json({
-      error: "Não logado"
-    });
+    return res.status(401).json({ error: "Não logado" });
   }
 
   req.user = user;
   next();
 }
 
-function isStaff(userId) {
+function requireCaller(req, res, next) {
+  if (!req.user?.caller && !req.user?.staff) {
+    return res.status(403).json({ error: "Apenas caller ou staff pode fazer isso." });
+  }
+
+  next();
+}
+
+function requireStaff(req, res, next) {
+  if (!req.user?.staff) {
+    return res.status(403).json({ error: "Apenas staff pode fazer isso." });
+  }
+
+  next();
+}
+
+function isStaffEnv(userId) {
   const ids = (process.env.STAFF_IDS || "")
     .split(",")
     .map(id => id.trim())
@@ -89,6 +102,23 @@ function nomeUsuario(user) {
   return user.globalName || user.username;
 }
 
+async function montarUsuarioDiscord(discordUser) {
+  const acesso = await getAcessoDiscord(discordUser.id);
+
+  const staff = isStaffEnv(discordUser.id) || acesso.staff;
+  const caller = staff || acesso.caller;
+
+  return {
+    id: discordUser.id,
+    username: discordUser.username,
+    globalName: discordUser.global_name,
+    avatar: discordUser.avatar,
+    caller,
+    staff,
+    roles: acesso.roles || []
+  };
+}
+
 app.get("/", (req, res) => {
   res.json({
     ok: true,
@@ -98,10 +128,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/health", (req, res) => {
-  res.json({
-    ok: true,
-    message: "Backend online"
-  });
+  res.json({ ok: true, message: "Backend online" });
 });
 
 app.get("/auth/discord", (req, res) => {
@@ -132,33 +159,18 @@ app.get("/auth/discord/callback", async (req, res) => {
         code,
         redirect_uri: process.env.DISCORD_REDIRECT_URI
       }),
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        }
-      }
+      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
     );
 
     const accessToken = tokenResponse.data.access_token;
 
     const userResponse = await axios.get(
       "https://discord.com/api/users/@me",
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      }
+      { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
     const discordUser = userResponse.data;
-
-    const user = {
-      id: discordUser.id,
-      username: discordUser.username,
-      globalName: discordUser.global_name,
-      avatar: discordUser.avatar,
-      staff: isStaff(discordUser.id)
-    };
+    const user = await montarUsuarioDiscord(discordUser);
 
     req.session.user = user;
 
@@ -178,20 +190,47 @@ app.get("/api/me", (req, res) => {
   const user = getUserFromRequest(req);
 
   if (!user) {
-    return res.json({
-      logged: false
-    });
+    return res.json({ logged: false });
   }
 
-  res.json({
-    logged: true,
-    user
-  });
+  res.json({ logged: true, user });
 });
 
-app.post("/api/runs", requireLogin, async (req, res) => {
-  const body = req.body;
+/* PASSES / PS */
+app.get("/api/passes", requireLogin, (req, res) => {
+  res.json(passes);
+});
 
+app.post("/api/passes", requireLogin, requireStaff, (req, res) => {
+  const { nome, dono, discordId } = req.body;
+
+  if (!nome || !dono) {
+    return res.status(400).json({ error: "Nome do PS e dono são obrigatórios." });
+  }
+
+  const novoPass = {
+    id: Date.now().toString(),
+    nome,
+    dono,
+    discordId: discordId || null,
+    createdAt: new Date().toISOString()
+  };
+
+  passes.unshift(novoPass);
+
+  res.json({ ok: true, pass: novoPass });
+});
+
+app.delete("/api/passes/:id", requireLogin, requireStaff, (req, res) => {
+  const before = passes.length;
+  passes = passes.filter(p => p.id !== req.params.id);
+
+  res.json({ ok: true, removed: before !== passes.length });
+});
+
+/* RUNS */
+app.post("/api/runs", requireLogin, requireCaller, async (req, res) => {
+  const body = req.body;
   const callerName = nomeUsuario(req.user);
 
   const run = {
@@ -217,12 +256,14 @@ app.post("/api/runs", requireLogin, async (req, res) => {
   runs.unshift(run);
 
   for (const rep of run.repasses) {
+    const passInfo = passes.find(p => p.nome === rep.pass);
+
     const novoRepasse = {
       id: Date.now().toString() + Math.random().toString(16).slice(2),
       runId: run.id,
 
       devedorNome: rep.dono,
-      devedorDiscordId: rep.donoDiscordId || null,
+      devedorDiscordId: rep.donoDiscordId || passInfo?.discordId || null,
 
       credorNome: run.callerName,
       credorDiscordId: req.user.id,
@@ -245,11 +286,69 @@ app.post("/api/runs", requireLogin, async (req, res) => {
     });
   }
 
-  res.json({
-    ok: true,
-    run,
-    repassesCriados: run.repasses.length
-  });
+  res.json({ ok: true, run, repassesCriados: run.repasses.length });
+});
+
+app.get("/api/runs", requireLogin, (req, res) => {
+  if (req.user.staff) return res.json(runs);
+
+  const minhas = runs.filter(r => r.callerId === req.user.id);
+  res.json(minhas);
+});
+
+/* REPASSES */
+app.get("/api/repasses", requireLogin, (req, res) => {
+  if (req.user.staff) return res.json(repasses);
+
+  const userId = req.user.id;
+  const nome = nomeUsuario(req.user).toLowerCase();
+
+  const meus = repasses.filter(r =>
+    r.devedorDiscordId === userId ||
+    r.credorDiscordId === userId ||
+    (r.devedorNome || "").toLowerCase() === nome ||
+    (r.credorNome || "").toLowerCase() === nome
+  );
+
+  res.json(meus);
+});
+
+app.post("/api/repasses/:id/paguei", requireLogin, (req, res) => {
+  const rep = repasses.find(r => r.id === req.params.id);
+
+  if (!rep) return res.status(404).json({ error: "Repasse não encontrado" });
+
+  const userId = req.user.id;
+
+  if (!req.user.staff && rep.devedorDiscordId && rep.devedorDiscordId !== userId) {
+    return res.status(403).json({ error: "Só quem deve pagar ou staff pode confirmar pagamento." });
+  }
+
+  rep.pagadorConfirmou = true;
+  rep.status = rep.recebedorConfirmou ? "confirmado" : "aguardando_recebedor";
+
+  res.json({ ok: true, repasse: rep });
+});
+
+app.post("/api/repasses/:id/recebi", requireLogin, (req, res) => {
+  const rep = repasses.find(r => r.id === req.params.id);
+
+  if (!rep) return res.status(404).json({ error: "Repasse não encontrado" });
+
+  const userId = req.user.id;
+
+  if (!req.user.staff && rep.credorDiscordId !== userId) {
+    return res.status(403).json({ error: "Só quem recebe ou staff pode confirmar recebimento." });
+  }
+
+  rep.recebedorConfirmou = true;
+  rep.status = rep.pagadorConfirmou ? "confirmado" : "aguardando_pagador";
+
+  res.json({ ok: true, repasse: rep });
+});
+
+app.post("/auth/logout", (req, res) => {
+  req.session.destroy(() => res.json({ ok: true }));
 });
 
 const PORT = process.env.PORT || 3000;
